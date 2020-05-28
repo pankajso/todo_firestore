@@ -31,7 +31,14 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  deleteTodos() {}
+  deleteTodos(item) {
+    DocumentReference document =
+        Firestore.instance.collection("stodo").document(item);
+
+    document.delete().whenComplete(() {
+      print("$item Deleted");
+    });
+  }
 
   @override
   // void initState() {
@@ -97,7 +104,10 @@ class _MyAppState extends State<MyApp> {
                     DocumentSnapshot documentSnapshot =
                         snapshots.data.documents[index];
                     return Dismissible(
-                        key: Key(index.toString()),
+                      onDismissed: (directon) {
+                        deleteTodos( documentSnapshot["title"]);
+                      },
+                        key: Key(documentSnapshot["title"]),
                         child: Card(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
@@ -112,9 +122,10 @@ class _MyAppState extends State<MyApp> {
                                 color: Colors.lightGreen,
                               ),
                               onPressed: () {
-                                setState(() {
-                                  todos.removeAt(index);
-                                });
+                                deleteTodos(documentSnapshot["title"]);
+                                // setState(() {
+                                //   todos.removeAt(index);
+                                // });
                               },
                             ),
                           ),
@@ -122,7 +133,6 @@ class _MyAppState extends State<MyApp> {
                   });
             }
           }),
-
       // body:
     );
   }
