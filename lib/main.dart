@@ -21,29 +21,27 @@ class _MyAppState extends State<MyApp> {
   List todos = List();
   String input = "";
 
-  createTodos(){
-    DocumentReference document = 
-            Firestore.instance.collection("todos").document(input);
-    Map<String, String>todos = {"tasktile": input};
+  createTodos() {
+    DocumentReference document =
+        Firestore.instance.collection("stodo").document(input);
+    Map<String, String> todos = {"title": input};
 
-    document.setData(todos).whenComplete(() {  
+    document.setData(todos).whenComplete(() {
       print("$input Created");
     });
   }
 
-  deleteTodos(){ 
-
-  }
+  deleteTodos() {}
 
   @override
-  void initState() {
-    super.initState();
-    todos.add("Task 1");
-    todos.add("Task 2");
-    todos.add("Task 3");
-    todos.add("Task 4");
-    todos.add("Task 5");
-  }
+  // void initState() {
+  //   super.initState();
+  //   todos.add("Task 1");
+  //   todos.add("Task 2");
+  //   todos.add("Task 3");
+  //   todos.add("Task 4");
+  //   todos.add("Task 5");
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +55,8 @@ class _MyAppState extends State<MyApp> {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   title: Text("Add Task"),
                   content: TextField(
                     onChanged: (String value) {
@@ -67,9 +66,10 @@ class _MyAppState extends State<MyApp> {
                   actions: <Widget>[
                     FlatButton(
                         onPressed: () {
-                          setState(() {
-                            todos.add(input);
-                          });
+                          // setState(() {
+                          //   todos.add(input);
+                          // });
+                          createTodos();
                           Navigator.of(context).pop();
                         },
                         child: Text("Add"))
@@ -82,33 +82,48 @@ class _MyAppState extends State<MyApp> {
           color: Colors.black,
         ),
       ),
-      body: ListView.builder(
-          itemCount: todos.length,
-          itemBuilder: (BuildContext context, int index) {
-            return Dismissible(
-                key: Key(todos[index]),
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  margin: EdgeInsets.all(5),
-                  elevation: 16,
-                  child: ListTile(
-                    title: Text(todos[index]),
-                    trailing: IconButton(
-                      icon: Icon(
-                        Icons.delete,
-                        color: Colors.lightGreen,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          todos.removeAt(index);
-                        });
-                      },
-                    ),
-                  ),
-                ));
+      body: StreamBuilder(
+          stream: Firestore.instance.collection("stodo").snapshots(),
+          builder: (BuildContext context, AsyncSnapshot snapshots) {
+            if (!snapshots.hasData) {
+              return Center(
+                child: CircularProgressIndicator(),
+              );
+            } else {
+              return ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: snapshots.data.documents.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    DocumentSnapshot documentSnapshot =
+                        snapshots.data.documents[index];
+                    return Dismissible(
+                        key: Key(index.toString()),
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          margin: EdgeInsets.all(5),
+                          elevation: 16,
+                          child: ListTile(
+                            title: Text(documentSnapshot["title"]),
+                            trailing: IconButton(
+                              icon: Icon(
+                                Icons.delete,
+                                color: Colors.lightGreen,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  todos.removeAt(index);
+                                });
+                              },
+                            ),
+                          ),
+                        ));
+                  });
+            }
           }),
+
+      // body:
     );
   }
 }
