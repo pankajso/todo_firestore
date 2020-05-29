@@ -40,15 +40,29 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  @override
-  // void initState() {
-  //   super.initState();
-  //   todos.add("Task 1");
-  //   todos.add("Task 2");
-  //   todos.add("Task 3");
-  //   todos.add("Task 4");
-  //   todos.add("Task 5");
-  // }
+  int _activeTab = 0;
+  static const TextStyle optionStyle =
+      TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
+  static const List<Widget> _widgetOptions = <Widget>[
+    Text(
+      'All',
+      style: optionStyle,
+    ),
+    Text(
+      'Pending',
+      style: optionStyle,
+    ),
+    Text(
+      'Done',
+      style: optionStyle,
+    ),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _activeTab = index;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +103,35 @@ class _MyAppState extends State<MyApp> {
           color: Colors.black,
         ),
       ),
-      body: StreamBuilder(
+      body: Container(
+        child: buildStream(),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.black,
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            title: Text('Home'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.business),
+            title: Text('Business'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.school),
+            title: Text('School'),
+          ),
+        ],
+        currentIndex: _activeTab,
+        selectedItemColor: Colors.limeAccent,
+        onTap: _onItemTapped,
+      ),
+      // body:
+    );
+  }
+
+  StreamBuilder<QuerySnapshot> buildStream() {
+    return StreamBuilder(
           stream: Firestore.instance.collection("stodo").snapshots(),
           builder: (BuildContext context, AsyncSnapshot snapshots) {
             if (!snapshots.hasData) {
@@ -97,43 +139,43 @@ class _MyAppState extends State<MyApp> {
                 child: CircularProgressIndicator(),
               );
             } else {
-              return ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: snapshots.data.documents.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    DocumentSnapshot documentSnapshot =
-                        snapshots.data.documents[index];
-                    return Dismissible(
-                      onDismissed: (directon) {
-                        deleteTodos( documentSnapshot["title"]);
-                      },
-                        key: Key(documentSnapshot["title"]),
-                        child: Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          margin: EdgeInsets.all(5),
-                          elevation: 16,
-                          child: ListTile(
-                            title: Text(documentSnapshot["title"]),
-                            trailing: IconButton(
-                              icon: Icon(
-                                Icons.delete,
-                                color: Colors.lightGreen,
-                              ),
-                              onPressed: () {
-                                deleteTodos(documentSnapshot["title"]);
-                                // setState(() {
-                                //   todos.removeAt(index);
-                                // });
-                              },
-                            ),
-                          ),
-                        ));
-                  });
+              return _taskListView(snapshots);
             }
-          }),
-      // body:
-    );
+          });
+  }
+
+  ListView _taskListView(AsyncSnapshot snapshots) {
+    {
+      return ListView.builder(
+          shrinkWrap: true,
+          itemCount: snapshots.data.documents.length,
+          itemBuilder: (BuildContext context, int index) {
+            DocumentSnapshot documentSnapshot = snapshots.data.documents[index];
+            return Dismissible(
+                onDismissed: (directon) {
+                  deleteTodos(documentSnapshot["title"]);
+                },
+                key: Key(documentSnapshot["title"]),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  margin: EdgeInsets.all(5),
+                  elevation: 16,
+                  child: ListTile(
+                    title: Text(documentSnapshot["title"]),
+                    trailing: IconButton(
+                      icon: Icon(
+                        Icons.delete,
+                        color: Colors.lightGreen,
+                      ),
+                      onPressed: () {
+                        deleteTodos(documentSnapshot["title"]);
+                      },
+                    ),
+                  ),
+                ));
+          });
+    }
   }
 }
